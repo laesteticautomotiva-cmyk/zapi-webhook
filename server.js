@@ -1,66 +1,43 @@
 const express = require("express");
 const axios = require("axios");
-require("dotenv").config();
 
 const app = express();
 app.use(express.json());
 
-// 🔥 WEBHOOK Z-API
-app.post("/webhook/whatsapp", async (req, res) => {
-  res.status(200).send("ok");
-
-  console.log("📩 WEBHOOK RECEBIDO:", JSON.stringify(req.body, null, 2));
-
-  const payload = req.body;
-
-  const phone = payload.phone;
-  const text = payload.text?.message || payload.text;
-
-  console.log("📌 EXTRAÍDO:", { phone, text });
-
-  if (!phone || !text) {
-    console.log("❌ Payload inválido");
-    return;
-  }
-
-  console.log("➡️ Processando resposta...");
-
-  await sendZAPI(
-    phone,
-    "Olá! 👋 Sou a Lara da LA Estética Automotiva. Como posso ajudar você hoje?"
-  );
-});
-
-// 🔥 TESTE DE VIDA DO SERVIDOR
 app.get("/", (req, res) => {
   res.send("API Z-API rodando 🚀");
 });
 
-// 🔥 START SERVER
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("🚀 Servidor rodando na porta " + PORT);
+app.post("/webhook/whatsapp", async (req, res) => {
+  res.status(200).send("ok");
+
+  console.log("📩 RECEBIDO:", JSON.stringify(req.body));
+
+  const phone = req.body.phone;
+  const text = req.body.text?.message;
+
+  if (!phone || !text) return;
+
+  console.log("➡️ respondendo...");
+
+  await sendZAPI(phone);
 });
 
-// 🔥 FUNÇÃO DE ENVIO Z-API
-async function sendZAPI(phone, message) {
-  console.log("🔥 ENVIANDO PARA Z-API...");
-
+async function sendZAPI(phone) {
   const url = `https://api.z-api.io/instances/${process.env.ZAPI_INSTANCE_ID}/token/${process.env.ZAPI_TOKEN}/send-text`;
 
-  console.log("➡️ URL:", url);
-
   try {
-    const response = await axios.post(url, {
-      phone: phone,
-      message: message,
+    const r = await axios.post(url, {
+      phone,
+      message: "Olá! 👋 Sou a Lara da LA Estética Automotiva. Como posso ajudar?"
     });
 
-    console.log("📤 RESPOSTA Z-API:", JSON.stringify(response.data, null, 2));
-  } catch (error) {
-    console.log(
-      "❌ ERRO Z-API:",
-      error.response?.data || error.message
-    );
+    console.log("📤 ENVIADO COM SUCESSO:", r.data);
+  } catch (e) {
+    console.log("❌ ERRO Z-API:", e.response?.data || e.message);
   }
 }
+
+app.listen(process.env.PORT || 3000, () => {
+  console.log("Servidor rodando");
+});
