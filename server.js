@@ -8,7 +8,7 @@ app.use(express.json());
 app.post("/webhook/whatsapp", async (req, res) => {
   res.status(200).send("ok");
 
-  console.log("Webhook recebido:", req.body);
+  console.log("📩 Webhook:", req.body);
 });
 
 app.get("/", (req, res) => {
@@ -17,5 +17,5 @@ app.get("/", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log("Rodando na porta " + PORT);
+  console.log("Servidor rodando na porta " + PORT);
 });
