@@ -20,21 +20,32 @@ app.post("/webhook/whatsapp", async (req, res) => {
 
   console.log("➡️ respondendo...");
 
-  await sendZAPI(phone);
+  await sendZAPI(
+    phone,
+    "Olá! 👋 Sou a Lara da LA Estética Automotiva. Como posso ajudar?"
+  );
 });
 
-async function sendZAPI(phone) {
+async function sendZAPI(phone, message) {
   const url = `https://api.z-api.io/instances/${process.env.ZAPI_INSTANCE_ID}/token/${process.env.ZAPI_TOKEN}/send-text`;
 
   try {
-    const r = await axios.post(url, {
-      phone,
-      message: "Olá! 👋 Sou a Lara da LA Estética Automotiva. Como posso ajudar?"
-    });
+    const response = await axios.post(
+      url,
+      {
+        phone,
+        message
+      },
+      {
+        headers: {
+          "Client-Token": "E1982A98C5F7CE2B4DC0F2F4"
+        }
+      }
+    );
 
-    console.log("📤 ENVIADO COM SUCESSO:", r.data);
-  } catch (e) {
-    console.log("❌ ERRO Z-API:", e.response?.data || e.message);
+    console.log("📤 ENVIADO COM SUCESSO:", response.data);
+  } catch (error) {
+    console.log("❌ ERRO Z-API:", error.response?.data || error.message);
   }
 }
 
