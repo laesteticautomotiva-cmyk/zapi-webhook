@@ -1,25 +1,34 @@
-async function sendZAPI(phone, message) {
-  console.log("INSTANCE:", process.env.ZAPI_INSTANCE_ID);
-  console.log("TOKEN:", process.env.ZAPI_TOKEN);
+import axios from "axios";
 
-  const url = `https://api.z-api.io/instances/${process.env.ZAPI_INSTANCE_ID}/token/${process.env.ZAPI_TOKEN}/send-text`;
+async function sendMetaWhatsApp(phone, message) {
+  const token = process.env.META_TOKEN;
+  const phoneNumberId = process.env.META_PHONE_NUMBER_ID;
+
+  const url = `https://graph.facebook.com/v20.0/${phoneNumberId}/messages`;
+
+  const cleanPhone = phone.toString().replace(/\D/g, "");
+
+  const data = {
+    messaging_product: "whatsapp",
+    to: cleanPhone,
+    type: "text",
+    text: {
+      body: message
+    }
+  };
+
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json"
+  };
 
   try {
-    const response = await axios.post(
-      url,
-      {
-        phone,
-        message
-      },
-      {
-        headers: {
-          "Client-Token": "E1982A98C5F7CE2B4DC0F2F4"
-        }
-      }
-    );
-
+    const response = await axios.post(url, data, { headers });
     console.log("📤 ENVIADO COM SUCESSO:", response.data);
+    return response.data;
   } catch (error) {
-    console.log("❌ ERRO Z-API:", error.response?.data || error.message);
+    console.log("❌ ERRO META:", error.response?.data || error.message);
   }
 }
+
+export default sendMetaWhatsApp;
