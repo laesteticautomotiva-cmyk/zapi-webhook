@@ -36,7 +36,17 @@ app.post("/webhook", async (req, res) => {
 
       console.log("MENSAGEM RECEBIDA:", text);
 
-      await sendReply(from, "Recebi sua mensagem: " + text);
+     await sendReply(from, `Olá 👋 Seja bem-vindo à LA Estética Automotiva 🚗✨
+
+Como posso te ajudar hoje?
+
+1️⃣ Higienização interna
+2️⃣ Polimento / vitrificação
+3️⃣ Orçamento
+4️⃣ Agendamento
+5️⃣ Falar com atendente
+
+Responda com o número da opção desejada.`);
     }
 
   } catch (err) {
