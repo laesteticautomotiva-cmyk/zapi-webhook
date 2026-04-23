@@ -6,6 +6,7 @@ app.use(express.json());
 
 const VERIFY_TOKEN = "laestetica123";
 
+// ================== VERIFICAÇÃO META ==================
 app.get("/webhook", (req, res) => {
   const mode = req.query["hub.mode"];
   const token = req.query["hub.verify_token"];
@@ -18,6 +19,7 @@ app.get("/webhook", (req, res) => {
   return res.sendStatus(403);
 });
 
+// ================== RECEBER MENSAGEM ==================
 app.post("/webhook", async (req, res) => {
   const body = req.body;
 
@@ -45,6 +47,7 @@ app.post("/webhook", async (req, res) => {
 
       await sendReply(from, respostaIA);
     }
+
   } catch (err) {
     console.log("ERRO WEBHOOK:", err.response?.data || err.message);
   }
@@ -52,25 +55,44 @@ app.post("/webhook", async (req, res) => {
   res.sendStatus(200);
 });
 
+// ================== BASE44 ==================
 async function getBase44Response({ phone, name, message }) {
   const base44Url = process.env.BASE44_CHATBOT_URL;
+  const secret = process.env.BASE44_SECRET;
+
+  console.log("BASE44 URL:", base44Url);
+  console.log("SECRET OK?", !!secret);
 
   if (!base44Url) {
-    throw new Error("BASE44_CHATBOT_URL não configurada na Railway");
+    throw new Error("BASE44_CHATBOT_URL não configurada");
   }
 
-  const res = await axios.post(base44Url, {
-    contact_phone: phone,
-    contact_name: name || "",
-    message_text: message,
-    whatsapp_number: "+5511914987210"
-  });
+  if (!secret) {
+    throw new Error("BASE44_SECRET não configurada");
+  }
 
-  console.log("RESPOSTA BASE44:", res.data);
+  const url = `${base44Url}?secret=${secret}`;
 
-  return res.data.response || "Desculpe, não consegui processar sua mensagem agora.";
+  try {
+    const res = await axios.post(url, {
+      contact_phone: phone,
+      contact_name: name || "",
+      message_text: message,
+      whatsapp_number: "+5511914987210"
+    });
+
+    console.log("RESPOSTA BASE44:", res.data);
+
+    return res.data.response || "Não consegui responder agora.";
+    
+  } catch (err) {
+    console.log("ERRO BASE44:", err.response?.data || err.message);
+
+    return "Desculpe, estou com instabilidade agora. Tente novamente em instantes 🙏";
+  }
 }
 
+// ================== ENVIAR WHATS ==================
 async function sendReply(to, message) {
   const token = process.env.META_TOKEN;
   const phoneNumberId = process.env.META_PHONE_NUMBER_ID;
@@ -99,12 +121,13 @@ async function sendReply(to, message) {
     );
 
     console.log("ENVIADO COM SUCESSO:", res.data);
+
   } catch (err) {
-    console.log("ERRO META:");
-    console.log(err.response?.data || err.message);
+    console.log("ERRO META:", err.response?.data || err.message);
   }
 }
 
+// ================== SERVER ==================
 const PORT = process.env.PORT || 8080;
 
 app.listen(PORT, () => {
