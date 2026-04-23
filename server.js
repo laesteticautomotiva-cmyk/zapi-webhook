@@ -33,28 +33,43 @@ app.post("/webhook", async (req, res) => {
     if (message?.type === "text") {
       const from = message.from;
       const text = message.text.body;
+      const contactName = value?.contacts?.[0]?.profile?.name || "";
 
       console.log("MENSAGEM RECEBIDA:", text);
 
-     await sendReply(from, `Olá 👋 Seja bem-vindo à LA Estética Automotiva 🚗✨
+      const respostaIA = await getBase44Response({
+        phone: from,
+        name: contactName,
+        message: text
+      });
 
-Como posso te ajudar hoje?
-
-1️⃣ Higienização interna
-2️⃣ Polimento / vitrificação
-3️⃣ Orçamento
-4️⃣ Agendamento
-5️⃣ Falar com atendente
-
-Responda com o número da opção desejada.`);
+      await sendReply(from, respostaIA);
     }
-
   } catch (err) {
-    console.log("ERRO WEBHOOK:", err.message);
+    console.log("ERRO WEBHOOK:", err.response?.data || err.message);
   }
 
   res.sendStatus(200);
 });
+
+async function getBase44Response({ phone, name, message }) {
+  const base44Url = process.env.BASE44_CHATBOT_URL;
+
+  if (!base44Url) {
+    throw new Error("BASE44_CHATBOT_URL não configurada na Railway");
+  }
+
+  const res = await axios.post(base44Url, {
+    contact_phone: phone,
+    contact_name: name || "",
+    message_text: message,
+    whatsapp_number: "+5511914987210"
+  });
+
+  console.log("RESPOSTA BASE44:", res.data);
+
+  return res.data.response || "Desculpe, não consegui processar sua mensagem agora.";
+}
 
 async function sendReply(to, message) {
   const token = process.env.META_TOKEN;
@@ -84,7 +99,6 @@ async function sendReply(to, message) {
     );
 
     console.log("ENVIADO COM SUCESSO:", res.data);
-
   } catch (err) {
     console.log("ERRO META:");
     console.log(err.response?.data || err.message);
@@ -92,4 +106,7 @@ async function sendReply(to, message) {
 }
 
 const PORT = process.env.PORT || 8080;
-app.listen(PORT, () => console.log("RODANDO NA PORTA", PORT));
+
+app.listen(PORT, () => {
+  console.log("RODANDO NA PORTA", PORT);
+});
